@@ -92,8 +92,6 @@ def handle_message(data):
             emit_agent("info", {"type": "warning", "message": "previous agent doesn't completed it's task."})
             last_state = AgentState.get_latest_state(project_name)
             if last_state["agent_is_active"] or not last_state["completed"]:
-                # emit_agent("info", {"type": "info", "message": "I'm trying to complete the previous task again."})
-                # message = manager.get_latest_message_from_user(project_name)
                 thread = Thread(target=lambda: agent.execute(message, project_name))
                 thread.start()
             else:
@@ -116,6 +114,14 @@ def get_agent_state():
     project_name = data.get("project_name")
     agent_state = AgentState.get_latest_state(project_name)
     return jsonify({"state": agent_state})
+
+
+@app.route("/api/get-project-files/", methods=["GET"])
+@route_logger(logger)
+def project_files():
+    project_name = request.args.get("project_name")
+    files = AgentState.get_project_files(project_name)  
+    return jsonify({"files": files})
 
 
 @app.route("/api/get-browser-snapshot", methods=["GET"])
@@ -186,7 +192,6 @@ def real_time_logs():
 @route_logger(logger)
 def set_settings():
     data = request.json
-    print("Data: ", data)
     config.config.update(data)
     config.save_config()
     return jsonify({"message": "Settings updated"})
@@ -200,6 +205,7 @@ def get_settings():
 
 
 @app.route("/api/status", methods=["GET"])
+@route_logger(logger)
 def status():
     return jsonify({"status": "server is running!"}), 200
 
